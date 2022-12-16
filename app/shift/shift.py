@@ -1,6 +1,7 @@
 import xlwings as xw
 import pandas as pd
 import random
+import time
 
 def next_idx(board):
     for y in range(9):
@@ -125,56 +126,86 @@ def swap_shift(grid,y,x):
 y_range = 5
 x_range = 10 
 count_max = 4
-def model_next_idx(grid,oy,ox):
+def model_next_idx(grid,y,x):
     y_list = list(range(y_range))
     #random.shuffle(y_list)
-    for y in y_list:
+    for idx,y in enumerate(y_list):
         if count_x(grid[y]) >= 5:
             continue
         x_list = list(range(x_range))
         random.shuffle(x_list)
         for x in x_list:
-            if x != ox:
                 if grid[y][x] == 0:
-                    return y, x
+                    return y, x      
+    return -1, -1
+
+def model_next_idx2(grid,y,x):
+    y_list = list(range(y_range))
+    #random.shuffle(y_list)
+    for idx,y in enumerate(y_list):
+        if count_x(grid[y]) >= 5:
+            continue
+        x_list = list(range(x_range))
+        random.shuffle(x_list)
+        for x in x_list:
+                if grid[y][x] == 0:
+                    return y, x      
     return -1, -1
 
 def check_model_val(grid, y, x):
-    #return True
-    #print("check:",y,x)
     apply_count = 0
     for i in range(y_range):       
         if grid[i][x] == 1:
             apply_count += 1
-            #print(y,x,apply_count)
-    #print("check:",y,x,apply_count)
     if apply_count > 2:
         print("koko:",y,x,apply_count)
+        return False   
+    return True
+
+def check_model_val2(grid, y, x):
+    apply_count = 0
+    for i in range(y_range):       
+        if grid[i][x] == 1:
+            apply_count += 1
+    if apply_count < 3:
+        print("dame:",y,x,apply_count)
         return False
     return True
 
-def solve_model(grid,y,x):
-    y,x = model_next_idx(grid,y,x)
+def count_shift_model(grid):
+    dc_l =[]
+    for x in range(x_range):
+        dc = 0
+        for y in range(y_range):
+            if grid[y][x] == 1:
+                dc += 1
+        dc_l.append(dc)
+    return dc_l
+
+def solve_model(grid,y,x,check_fun=check_model_val,next_fun=model_next_idx):
+    y,x = next_fun(grid,y,x)
     #print("new y,x:",y,x)
     if -1 in [y,x]: 
-        print("ループ終了")
+        #print("ループ終了")
+        #solve_model(grid,0,0)
         return True     
-    for i in range(11):
-        if check_model_val(grid,y,x):
+    for i in range(10):
+#        if check_model_val(grid,y,x):
+        if check_fun(grid,y,x):
             grid[y][x] = 1
             xw.Range((y+1,x+16)).value = 1
-            #print("pre recursive:",y,x,grid)
             if solve_model(grid,y,x):
-            #if solve_model(grid,y,x):
-                #print("after recursive:",y,x,grid)
                 return True
             grid[y][x] = 0
             xw.Range((y+1,x+16)).value = 0
             print("Track back:",y,x,grid)
-                #solve_model(grid,y,x)
-    #solve_model(grid,y,x)
-    #print("--------")
+            #solve_model(grid,y,x)
     return False
+
+#----- swap model logic -----
+
+
+
 
 
 #-------------------------------------
@@ -183,14 +214,19 @@ def main():
 
     sh_model = wb.sheets["model"]
 
-
+    global model_grid
     model_grid = [[0 if v is None else int(v) for v in row] for row in sh_model.range('A1:J5').value]
     sh_model.range('P1').value = model_grid
-    solve_model(model_grid,0,0)
 
+    solve_model(model_grid,0,0)
     for row in model_grid:
         print(row)
 
+    time.sleep(1)
+
+    solve_model(model_grid,0,0,check_model_val2,model_next_idx2)
+    for row in model_grid:
+        print(row)
 
 
     return #テストのためここから先はすすませない
