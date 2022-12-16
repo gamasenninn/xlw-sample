@@ -148,18 +148,18 @@ def check_model_val(grid, y, x):
             apply_count += 1
             #print(y,x,apply_count)
     #print("check:",y,x,apply_count)
-    if apply_count > 3:
+    if apply_count > 2:
         print("koko:",y,x,apply_count)
         return False
     return True
 
-def solve_model(grid,oy,ox):
-    y,x = model_next_idx(grid,oy,ox)
+def solve_model(grid,y,x):
+    y,x = model_next_idx(grid,y,x)
     #print("new y,x:",y,x)
     if -1 in [y,x]: 
         print("ループ終了")
         return True     
-    for i in range(2):
+    for i in range(11):
         if check_model_val(grid,y,x):
             grid[y][x] = 1
             xw.Range((y+1,x+16)).value = 1
@@ -172,7 +172,6 @@ def solve_model(grid,oy,ox):
             xw.Range((y+1,x+16)).value = 0
             print("Track back:",y,x,grid)
                 #solve_model(grid,y,x)
-            #return True
     #solve_model(grid,y,x)
     #print("--------")
     return False
